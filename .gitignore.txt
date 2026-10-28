@@ -1,0 +1,15 @@
+# Сборка C++
+build/
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.pdb
+*.ilk
+*.exp
+
+# Системный мусор
+.vscode/
+Thumbs.db
+.DS_Store
