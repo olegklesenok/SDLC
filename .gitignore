@@ -1,0 +1,9 @@
+build/
+out/
+bin/
+.idea/
+.vscode/
+*.class
+*.log
+Thumbs.db
+.DS_Store
