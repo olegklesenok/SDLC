@@ -1,0 +1,52 @@
+@startuml
+title sd add_expense — Диаграмма последовательности добавления расхода
+
+actor "Пользователь" as User
+participant ":App" as App
+participant ":Ledger" as Ledger
+participant ":Analytics" as Analytics
+participant ":Storage" as Storage
+
+User -> App : addOperation(Expense) / быстрый ввод
+activate App
+
+opt Быстрый ввод ("-18,50 прод молоко")
+  App -> Analytics : parseQuickInput(ledger, input)
+  activate Analytics
+  Analytics --> App : QuickParseResult
+  deactivate Analytics
+end
+
+App -> Ledger : validate(op)
+activate Ledger
+Ledger --> App : "" (ошибок нет)
+deactivate Ledger
+
+App -> Ledger : walletBalance(op.wallet)
+activate Ledger
+Ledger --> App : balance
+deactivate Ledger
+
+alt amount > balance
+  App --> User : "В кошельке недостаточно средств. Сохранить? (д/н)"
+  User --> App : "д" (confirmed)
+end
+
+group { < 1000 ms } [Сохранение и проверка лимита]
+  App -> App : pushUndo()
+  App -> Ledger : add(op)
+  activate Ledger
+  Ledger --> App : opId
+  deactivate Ledger
+
+  ref over App, Storage : Атомарное сохранение save(ledger) через .tmp
+
+  App -> Analytics : budgetStatus(ledger, op.category, op.date)
+  activate Analytics
+  Analytics --> App : BudgetStatus (Normal | Near | Over)
+  deactivate Analytics
+end
+
+App --> User : "✓ Расход №id сохранён" + предупреждение лимита
+deactivate App
+@enduml

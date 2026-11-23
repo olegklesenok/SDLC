@@ -1,0 +1,20 @@
+@startuml
+title Диаграмма состояний: Финансовая цель накоплений (stm SavingsGoal)
+
+[*] --> Активна : addGoal() [savedAmount < targetAmount]
+[*] --> Достигнута : addGoal() [savedAmount ≥ targetAmount]
+
+state "Активна\n(в процессе накопления)" as Активна : do / projectGoal(): расчёт остатка\nи взноса в месяц
+state "Срок наступил\n(просрочена)" as Просрочена : entry / advice: «Срок цели наступил»
+state "Достигнута\n(completed = true)" as Достигнута : entry / зелёный статус «✓ Цель достигнута!»
+
+Активна --> Активна : contributeGoal(amount)\n[savedAmount < targetAmount]
+Активна --> Достигнута : contributeGoal(amount)\n[savedAmount ≥ targetAmount]
+Активна --> Просрочена : Системные часы [today ≥ deadline и не завершена]
+
+Просрочена --> Достигнута : contributeGoal(amount)\n[savedAmount ≥ targetAmount]
+
+Активна --> [*] : removeGoal(id)
+Просрочена --> [*] : removeGoal(id)
+Достигнута --> [*] : removeGoal(id)
+@enduml
