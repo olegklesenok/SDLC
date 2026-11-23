@@ -1,0 +1,14 @@
+build/
+cmake-build-*/
+.vs/
+.idea/
+.vscode/
+data/
+demo_data/
+*.exe
+*.obj
+*.o
+*.a
+*.user
+Thumbs.db
+.DS_Store
