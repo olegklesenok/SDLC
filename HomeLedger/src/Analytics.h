@@ -1,4 +1,4 @@
-// Analytics.h — статистика, контроль бюджета и советы по организации трат
+// Analytics.h — статистика, контроль бюджета, индекс финансового здоровья, прогнозы и советы
 #pragma once
 #include <string>
 #include <utility>
@@ -19,7 +19,7 @@ struct PeriodStats {
     Money balance() const { return income - expense; }
     std::vector<CategoryTotal> expenseByCategory;  // по убыванию суммы
     std::vector<CategoryTotal> incomeByCategory;
-    Money needs = 0, wants = 0, savings = 0;      // расходы по группам 50/30/20
+    Money needs = 0, wants = 0, savings = 0;  // расходы по группам 50/30/20
     int operations = 0;
 };
 
@@ -41,6 +41,48 @@ struct Advice {
     std::string text;
 };
 
+// Индекс финансового здоровья (0..100 баллов)
+struct FinancialHealth {
+    int score = 0;
+    int savingsScore = 0;      // 0..30
+    int rule503020Score = 0;   // 0..25
+    int budgetScore = 0;       // 0..25
+    int cushionScore = 0;      // 0..20
+    double safetyCushionMonths = 0.0;
+    std::string grade;
+};
+
+// Распределение расходов по дням недели
+struct WeekdayStat {
+    int dow = 0;  // 0 = Пн .. 6 = Вс
+    std::string name;
+    Money total = 0;
+    int count = 0;
+    Money average() const { return count > 0 ? total / count : 0; }
+};
+
+// Прогноз достижения финансовой цели
+struct GoalProjection {
+    int goalId = 0;
+    std::string name;
+    Money remaining = 0;
+    double percentDone = 0.0;
+    int daysLeft = 0;
+    Money dailyNeeded = 0;
+    Money monthlyNeeded = 0;
+    bool overdue = false;
+};
+
+// Результат разбора строки быстрого ввода ("-18,50 продукты хлеб")
+struct QuickParseResult {
+    bool ok = false;
+    OpType type = OpType::Expense;
+    Money amount = 0;
+    std::string category;
+    std::string comment;
+    std::string error;
+};
+
 constexpr double kBudgetNearPercent = 80.0;  // порог предупреждения о приближении к лимиту
 
 PeriodStats computeStats(const Ledger& ledger, const Date& from, const Date& to);
@@ -51,3 +93,8 @@ BudgetStatus budgetStatus(const Ledger& ledger, const std::string& category, con
 std::vector<PeriodStats> monthlyDynamics(const Ledger& ledger, const Date& lastMonth, int months);
 // Советы для месяца (today — текущая дата, нужна для прогноза)
 std::vector<Advice> makeAdvice(const Ledger& ledger, const Date& month, const Date& today);
+
+FinancialHealth computeFinancialHealth(const Ledger& ledger, const Date& month);
+std::vector<WeekdayStat> weekdayBreakdown(const Ledger& ledger, const Date& from, const Date& to);
+GoalProjection projectGoal(const SavingsGoal& goal, const Date& today);
+QuickParseResult parseQuickInput(const Ledger& ledger, const std::string& input);

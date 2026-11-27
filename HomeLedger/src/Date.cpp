@@ -7,6 +7,8 @@
 namespace {
 const char* kMonths[] = {"Январь", "Февраль", "Март",     "Апрель",  "Май",    "Июнь",
                          "Июль",   "Август",  "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"};
+const char* kWeekdays[] = {"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"};
+const char* kWeekdaysShort[] = {"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"};
 
 bool isLeap(int y) { return (y % 4 == 0 && y % 100 != 0) || y % 400 == 0; }
 }  // namespace
@@ -24,8 +26,9 @@ Date Date::today() {
 
 int Date::daysInMonth(int y, int m) {
     static const int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (m < 1 || m > 12) return 30;
     if (m == 2 && isLeap(y)) return 29;
-    return days[(m - 1) % 12];
+    return days[m - 1];
 }
 
 bool Date::isValid(int y, int m, int d) {
@@ -69,6 +72,21 @@ long Date::toDays() const {
     return era * 146097 + static_cast<long>(doe) - 719468;
 }
 
+int Date::dayOfWeek() const {
+    // 1970-01-01 (toDays == 0) — четверг (индекс 3 при 0 = Пн)
+    long r = (toDays() + 3) % 7;
+    if (r < 0) r += 7;
+    return static_cast<int>(r);
+}
+
+const char* Date::weekdayName(int dow) {
+    return (dow >= 0 && dow < 7) ? kWeekdays[dow] : "";
+}
+
+const char* Date::weekdayShort(int dow) {
+    return (dow >= 0 && dow < 7) ? kWeekdaysShort[dow] : "";
+}
+
 Date Date::fromDays(long z) {
     z += 719468;
     const long era = (z >= 0 ? z : z - 146096) / 146097;
@@ -84,12 +102,20 @@ Date Date::fromDays(long z) {
 
 Date Date::addMonths(int n) const {
     int idx = y * 12 + (m - 1) + n;
-    return Date{idx / 12, idx % 12 + 1, 1};
+    int ny = idx >= 0 ? idx / 12 : (idx - 11) / 12;
+    int nm = idx - ny * 12 + 1;
+    return Date{ny, nm, 1};
 }
 
 std::string Date::iso() const {
     char buf[16];
     std::snprintf(buf, sizeof buf, "%04d-%02d-%02d", y, m, d);
+    return buf;
+}
+
+std::string Date::yearMonth() const {
+    char buf[12];
+    std::snprintf(buf, sizeof buf, "%04d-%02d", y, m);
     return buf;
 }
 

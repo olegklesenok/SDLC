@@ -1,0 +1,26 @@
+@startuml
+title Диаграмма состояний: Лимит категории расходов (stm BudgetLimit)
+
+[*] --> Не_задан : Инициализация категории
+
+state "Не задан\n(limit == 0)" as Не_задан
+state "Норма\n(usedPercent < 80 %)" as Норма : entry / зелёный индикатор
+state "Почти исчерпан\n(80 % ≤ usedPercent ≤ 100 %)" as Почти : entry / жёлтый алерт [!]
+state "Превышен\n(usedPercent > 100 %)" as Превышен : entry / красный алерт [!]
+
+Не_задан --> Норма : setBudget(cat, limit)\n[spent / limit < 0.80]
+Не_задан --> Почти : setBudget(cat, limit)\n[0.80 ≤ spent / limit ≤ 1.00]
+Не_задан --> Превышен : setBudget(cat, limit)\n[spent / limit > 1.00]
+
+Норма --> Почти : addExpense / [80 % ≤ used ≤ 100 %]
+Норма --> Превышен : addExpense / [used > 100 %]
+Почти --> Превышен : addExpense / [used > 100 %]
+
+Почти --> Норма : новый месяц или удаление расхода / [used < 80 %]
+Превышен --> Почти : увеличение лимита / [80 % ≤ used ≤ 100 %]
+Превышен --> Норма : новый месяц или увеличение лимита / [used < 80 %]
+
+Норма --> Не_задан : setBudget(cat, 0)
+Почти --> Не_задан : setBudget(cat, 0)
+Превышен --> Не_задан : setBudget(cat, 0)
+@enduml

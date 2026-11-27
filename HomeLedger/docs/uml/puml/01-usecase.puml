@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Владелец бюджета" as Owner
+actor "Член семьи" as Family
+actor "Системные часы\n(Время)" as Clock
+
+Family --|> Owner
+
+rectangle "Система «HomeLedger v1.0.0»" {
+  usecase "Внести расход или доход\n(вкл. быстрый ввод)" as UC1
+  usecase "Перевести между кошельками" as UC2
+  usecase "Журнал и глобальный поиск" as UC3
+  usecase "Баланс, статистика и\nиндекс здоровья" as UC4
+  usecase "Управлять лимитами" as UC5
+  usecase "Управлять целями\nнакоплений" as UC6
+  usecase "Провести регулярные\nплатежи" as UC7
+  usecase "Учитывать долги и займы" as UC8
+  usecase "Получить советы" as UC9
+  usecase "Настроить кошельки,\nкатегории и снимки" as UC10
+  usecase "Экспортировать отчёт\n(CSV / HTML)" as UC11
+
+  usecase "Валидация и проверка\nбюджетного лимита" as IncVal
+  usecase "Атомарное сохранение\nв CSV (.tmp)" as IncSave
+  usecase "Подтвердить расход\nсверх остатка" as ExtOver
+  usecase "Предупреждение о пороге\n80 % / 100 %" as ExtLim
+  usecase "Откат последнего\nдействия (Undo)" as ExtUndo
+}
+
+Family --> UC1
+Family --> UC3
+Family --> UC4
+
+Owner --> UC2
+Owner --> UC5
+Owner --> UC6
+Owner --> UC7
+Owner --> UC8
+Owner --> UC9
+Owner --> UC10
+Owner --> UC11
+
+Clock --> UC7
+Clock --> UC9
+
+UC1 ..> IncVal : <<include>>
+UC1 ..> IncSave : <<include>>
+UC3 ..> IncSave : <<include>>
+UC6 ..> IncSave : <<include>>
+UC7 ..> IncSave : <<include>>
+UC8 ..> IncSave : <<include>>
+
+ExtOver ..> UC1 : <<extend>>
+ExtLim ..> IncVal : <<extend>>
+ExtUndo ..> UC1 : <<extend>>
+@enduml

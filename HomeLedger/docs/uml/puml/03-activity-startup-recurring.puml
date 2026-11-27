@@ -1,0 +1,43 @@
+@startuml
+title Диаграмма активности: Запуск системы, автобэкап и регулярные платежи
+
+|App|
+start
+:Чтение параметров CLI\n(--data, --demo, --no-color, --force-color);
+|Storage|
+:load(ledger, warnings);
+if (Файл categories.csv найден?) then ([нет: первый запуск])
+  |Ledger|
+  :setDefaults() — создать базовые\nкатегории и кошельки;
+  |Storage|
+  :save(ledger);
+else ([да])
+  :Вывод предупреждений о\nпропущенных битых строках (если есть);
+endif
+:backup() — копирование CSV в backup/*.bak;
+
+|App|
+if (Передан флаг --demo и операций нет?) then ([да])
+  :generateDemo() — 6 месяцев, цели,\nрегулярные платежи и долги;
+endif
+
+|Ledger|
+:dueRecurring(Date::today());
+if (Есть ожидающие платежи?) then ([да])
+  |App|
+  :Показать предупреждение на главном экране\n«Ожидают регулярные платежи (N шт.)»;
+  |Пользователь|
+  if (Открыть меню 9 и провести?) then ([да])
+    |App|
+    :pushUndo();
+    |Ledger|
+    :applyAllDueRecurring(today)\n(создать операции, обновить last_ym);
+    |Storage|
+    :save(ledger);
+  else ([позже])
+  endif
+endif
+|App|
+:Отрисовка главного экрана и ожидание команды;
+stop
+@enduml

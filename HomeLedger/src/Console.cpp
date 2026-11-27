@@ -21,7 +21,7 @@ bool g_consoleInput = false;
 #endif
 }  // namespace
 
-void init(bool useColor) {
+void init(bool useColor, bool forceColor) {
     g_color = useColor;
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
@@ -29,12 +29,14 @@ void init(bool useColor) {
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode = 0;
     if (GetConsoleMode(out, &mode)) {
-        if (!SetConsoleMode(out, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING)) g_color = false;
-    } else {
+        if (!SetConsoleMode(out, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) && !forceColor) g_color = false;
+    } else if (!forceColor) {
         g_color = false;  // вывод перенаправлен в файл
     }
     DWORD inMode = 0;
     g_consoleInput = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &inMode) != 0;
+#else
+    (void)forceColor;
 #endif
 }
 
@@ -58,7 +60,7 @@ bool readLine(const std::string& prompt, std::string& out) {
     std::cout << prompt << std::flush;
 #ifdef _WIN32
     if (g_consoleInput) {
-        // Ввод кириллицы в консоли Windows надёжно работает только через ReadConsoleW
+        // Ввод кириллицы в консоли Windows надёжно работает через ReadConsoleW
         wchar_t buf[1024];
         DWORD read = 0;
         if (!ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), buf, 1023, &read, nullptr) || read == 0) return false;

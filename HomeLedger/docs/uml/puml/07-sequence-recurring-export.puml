@@ -1,0 +1,48 @@
+@startuml
+title sd recurring_and_export — Регулярные платежи и экспорт HTML-дашборда
+
+actor "Пользователь" as User
+participant ":App" as App
+participant ":Ledger" as Ledger
+participant ":Analytics" as Analytics
+participant ":Storage" as Storage
+
+User -> App : Выбор пункта "9 Регулярные платежи"
+activate App
+App -> Ledger : dueRecurring(Date::today())
+activate Ledger
+Ledger --> App : vector<RecurringPayment>
+deactivate Ledger
+App --> User : Список шаблонов с пометками [ОЖИДАЕТ]
+
+User -> App : "1" (Провести все ожидающие)
+App -> App : pushUndo()
+App -> Ledger : applyAllDueRecurring(today)
+activate Ledger
+loop Для каждого ожидающего платежа
+  Ledger -> Ledger : add(op), обновить lastAppliedYm
+end
+Ledger --> App : createdIds
+deactivate Ledger
+
+App -> Storage : save(ledger, error)
+activate Storage
+Storage --> App : true
+deactivate Storage
+App --> User : "✓ Проведено регулярных операций: N"
+deactivate App
+
+User -> App : Выбор пункта "13" → "2" (Экспорт HTML-дашборда)
+activate App
+App -> Storage : exportMonthHtml(ledger, month, outPath, err)
+activate Storage
+Storage -> Analytics : monthStats, computeFinancialHealth, makeAdvice
+activate Analytics
+Analytics --> Storage : агрегированная статистика и советы
+deactivate Analytics
+Storage -> Storage : Построение SVG (Donut + 6 мес.) и запись файла
+Storage --> App : outPath ("report_ГГГГ-ММ.html")
+deactivate Storage
+App --> User : "✓ Отчёт сохранён"
+deactivate App
+@enduml
